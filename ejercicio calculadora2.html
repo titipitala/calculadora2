@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Precio de Venta</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 600px;
+        }
+        h1 {
+            color: #007bff;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .form-label {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .form-control {
+            margin-bottom: 15px;
+        }
+        #resultado {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #e9ecef;
+            border-radius: 8px;
+            text-align: center;
+        }
+        #precioVenta, #margenGanancia {
+            color: #28a745;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        .emoji {
+            font-size: 1.2em;
+            margin-left: 5px;
+        }
+        #exportarPDF {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container animate__animated animate__fadeIn">
+        <h1><span class="emoji">💰</span> Calculadora de Precio de Venta <span class="emoji">📈</span></h1>
+        <form id="calculadoraForm">
+            <div class="mb-3">
+                <label for="conceptoProducto" class="form-label">Concepto del Producto:</label>
+                <input type="text" class="form-control" id="conceptoProducto" placeholder="Ingrese el nombre del producto" required>
+            </div>
+            <div class="mb-3">
+                <label for="precioArranque" class="form-label">Precio de Arranque:</label>
+                <input type="number" class="form-control" id="precioArranque" placeholder="Ingrese el costo inicial" required>
+            </div>
+            <div class="mb-3">
+                <label for="gastosFijos" class="form-label">Gastos Fijos (mensuales):</label>
+                <input type="number" class="form-control" id="gastosFijos" placeholder="Ingrese sus gastos fijos" required>
+            </div>
+            <div class="mb-3">
+                <label for="porcentajeGanancia" class="form-label">Porcentaje de Ganancia Deseado (%):</label>
+                <input type="number" class="form-control" id="porcentajeGanancia" placeholder="Ingrese el % de ganancia" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Calcular Precio</button>
+        </form>
+
+        <div id="resultado" class="animate__animated animate__fadeIn" style="display: none;">
+            <h2>Resultado <span class="emoji">📊</span></h2>
+            <p>Concepto del Producto: <span id="resultadoConcepto" class="fw-bold"></span></p>
+            <p>Precio de Venta Sugerido: <span id="precioVenta"></span></p>
+            <p>Margen de Ganancia: <span id="margenGanancia"></span>%</p>
+            <button id="exportarPDF" class="btn btn-success w-100">Exportar a PDF <span class="emoji">📄</span></button>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('calculadoraForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const conceptoProducto = document.getElementById('conceptoProducto').value;
+            const precioArranque = parseFloat(document.getElementById('precioArranque').value);
+            const gastosFijos = parseFloat(document.getElementById('gastosFijos').value);
+            const porcentajeGanancia = parseFloat(document.getElementById('porcentajeGanancia').value) / 100;
+
+            if (isNaN(precioArranque) || isNaN(gastosFijos) || isNaN(porcentajeGanancia)) {
+                alert('Por favor, ingrese valores numéricos válidos.');
+                return;
+            }
+
+            const precioVentaCalculado = (precioArranque + gastosFijos) / (1 - porcentajeGanancia);
+            const margenGananciaReal = ((precioVentaCalculado - (precioArranque + gastosFijos)) / precioVentaCalculado) * 100;
+
+            document.getElementById('resultadoConcepto').textContent = conceptoProducto;
+            document.getElementById('precioVenta').textContent = `$${precioVentaCalculado.toFixed(2)}`;
+            document.getElementById('margenGanancia').textContent = `${margenGananciaReal.toFixed(2)}`;
+
+            const resultadoDiv = document.getElementById('resultado');
+            resultadoDiv.style.display = 'block';
+            resultadoDiv.classList.remove('animate__fadeOut');
+            resultadoDiv.classList.add('animate__fadeIn');
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const resultadoDiv = document.getElementById('resultado');
+            resultadoDiv.style.display = 'none';
+        });
+
+        document.getElementById('resultado').addEventListener('click', function(event) {
+            if (event.target.id === 'exportarPDF') {
+                const concepto = document.getElementById('resultadoConcepto').textContent;
+                const precioVenta = document.getElementById('precioVenta').textContent;
+                const margenGanancia = document.getElementById('margenGanancia').textContent;
+
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF();
+
+                pdf.setFontSize(22);
+                pdf.text('Resultado del Cálculo', 15, 20);
+
+                pdf.setFontSize(12);
+                pdf.text(`Concepto del Producto: ${concepto}`, 15, 35);
+                pdf.text(`Precio de Venta Sugerido: ${precioVenta}`, 15, 45);
+                pdf.text(`Margen de Ganancia: ${margenGanancia}%`, 15, 55);
+
+                pdf.save(`calculo_precio_${concepto.replace(/\s+/g, '_').toLowerCase()}.pdf`);
+            }
+        });
+    </script>
+</body>
+</html>
